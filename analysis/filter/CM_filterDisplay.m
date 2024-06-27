@@ -41,14 +41,9 @@ if (strcmp(imageFilter, "Gaussian"))
 
 elseif (strcmp(imageFilter, "Low Pass"))
     
-    disp('Low Pass Filter');
-
-    % flip data back to sequential form 
-    channelData = flipud(data); 
     
-    % convert data to single column - raw data with scaling
-    channelData = reshape(channelData, [], 1);
-
+    disp('Low Pass Filter');
+    
     % sampling frequency for 4 channel system
     if (app.getNumOfChannels() == 4)
         if samplesperscan == 175
@@ -64,28 +59,31 @@ elseif (strcmp(imageFilter, "Low Pass"))
         fs = app.getSampleFrequency();
     end    
         
-
-
     fc = 2000;          % cut-off frequency (Hz)
     n_order = 2;        % equivalent to 4th order, filtfilt doubles order
 
-    % butterworth
-    % create filter coefficients
+    % butterworth - create filter coefficients
     [b, a] = butter(n_order, fc/(fs/2));  
-    
-    % apply filter to data, need zero phase filtering - filtfilt
-    channelData = filtfilt(b, a, channelData);
 
-    % get size of original data array
+
+    % New Code    
     [samplesPerScan, numberOfScans] = size(data);
+    filtered = zeros(samplesPerScan, numberOfScans);
 
-    % convert the column data back to a table
-    channelData = reshape(channelData, samplesPerScan, numberOfScans);
+    for i = 1 : numberOfScans
+      % get a scan + flip so first sample at top
+      oneScan = flipud(data(:, i));
 
-    % flip the data - scan bottom to top in color chart
-    filtered = flipud(channelData);     
+      % apply filter to data, need zero phase filtering - filtfilt
+      filteredScan = filtfilt(b, a, oneScan);
+
+      % re-flip filtered scan
+      filtered(:, i) = flipud(filteredScan);
+    end
+
 
 else 
+
     disp('Filter Off');
     filtered=data;
 end    
